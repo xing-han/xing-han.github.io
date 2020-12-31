@@ -1,3 +1,7 @@
+<video id="video" controls="" preload="none">
+    <source id="mp4" src="/home/liuqiang/Documents/ImproveSelf/情感心理学/71329742-1-6.mp4" type="video/mp4">
+</video>
+
 ## Welcome to GitHub Pages
 
 You can use the [editor on GitHub](https://github.com/xing-han/xing-han.github.io/edit/main/index.md) to maintain and preview the content for your website in Markdown files.
