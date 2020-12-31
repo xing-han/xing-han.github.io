@@ -1,5 +1,5 @@
 <video id="video" controls="" preload="none">
-    <source id="mp4" src="/home/liuqiang/Documents/ImproveSelf/情感心理学/71329742-1-6.mp4" type="video/mp4">
+    <source id="mp4" src="HwVideoEditor_2020_12_31_202857.mp4" type="video/mp4">
 </video>
 
 ## Welcome to GitHub Pages
