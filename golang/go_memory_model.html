@@ -1,0 +1,220 @@
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0 user-scalable=yes"/>
+    <link href="/main.css" rel="stylesheet" type="text/css">
+    <link href="/codehighlight.css" rel="stylesheet" type="text/css">
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml" title="Atom feed">
+    <link rel="shortcut icon" href="/images/logo.bmp">
+    <title></title>
+</head>
+<body>
+  <div class="content">
+  <h1>go 内存模型</h1>
+
+<p>[toc]</p>
+
+<h2>链接</h2>
+
+<p><a href="https://note.youdao.com/">官方文档</a></p>
+
+<h2>笔记</h2>
+
+<p>官方的态度: </p>
+
+<blockquote>
+  <p>If you must read the rest of this document to understand the behavior of your program, you are being too clever. </p>
+  
+  <p>Don't be clever.</p>
+</blockquote>
+
+<h3>happens before</h3>
+
+<p>定义: If event e1 happens before event e2, then we say that e2 happens after e1. Also, if e1 does not happen before e2 and does not happen after e2, then we say that e1 and e2 happen concurrently.</p>
+
+<p>Within a single goroutine, the happens-before order is the order expressed by the program.</p>
+
+<p>单个goroutine里面, 代码顺序就是happens-before顺序</p>
+
+<h4>定义1 read 允许看到 write 的条件, 允许代表可能</h4>
+
+<p>A read <em>r</em> of a variable <code>v</code> is <em>allowed</em> to observe a write <em>w</em> to <code>v</code> if both of the following hold:</p>
+
+<blockquote>
+  <ol>
+  <li><em>r</em> does not happen before <em>w</em>.</li>
+  <li>There is no other write <em>w'</em> to <code>v</code> that happens after <em>w</em> but before <em>r</em>.</li>
+  </ol>
+</blockquote>
+
+<p>这里第一条说的是r不能明确的happens beofre w. 那么它有两种选择</p>
+
+<ul>
+<li>w happens before v</li>
+<li>w 和 v 是 happen concurrently</li>
+</ul>
+
+<h4>定义2 read 一定能看到 write 操作的条件</h4>
+
+<p>To guarantee that a read <em>r</em> of a variable <code>v</code> observes a particular write <em>w</em> to <code>v</code>, ensure that <em>w</em> is the only write <em>r</em> is allowed to observe. That is, <em>r</em> is <em>guaranteed</em> to observe <em>w</em> if both of the following hold:</p>
+
+<blockquote>
+  <ol>
+  <li><em>w</em> happens before <em>r</em>.</li>
+  <li>Any other write to the shared variable <code>v</code> either happens before <em>w</em> or after <em>r</em>.</li>
+  </ol>
+</blockquote>
+
+<p>This pair of conditions is stronger than the first pair; it requires that <strong>there are no other writes happening concurrently with <em>w</em> or <em>r</em>.</strong></p>
+
+<p>Within a single goroutine, there is no concurrency, so the two definitions are equivalent: a read <em>r</em> observes the value written by the most recent write <em>w</em> to <code>v</code>. When multiple goroutines access a shared variable <code>v</code>, they must use synchronization events to establish happens-before conditions that ensure reads observe the desired writes.</p>
+
+<h4>特殊定义</h4>
+
+<ul>
+<li><p>The initialization of variable <code>v</code> with the zero value for <code>v</code>'s type behaves as a write in the memory model.</p>
+
+<p>初始化变量被视为写,</p></li>
+<li><p>Reads and writes of values larger than a single machine word behave as multiple machine-word-sized operations in an unspecified order.</p>
+
+<p>读写不是单个机器字的操作被视为没有明确顺序的读取多个机器字</p></li>
+</ul>
+
+<h3>同步原语</h3>
+
+<h4>初始化</h4>
+
+<p>程序初始化一定只有一个goroutine, 但是一个goroutine可以创建多个并</p>
+
+<p>If a package <code>p</code> imports package <code>q</code>, the completion of <code>q</code>'s <code>init</code> functions happens before the start of any of <code>p</code>'s.</p>
+
+<p>The start of the function <code>main.main</code> happens after all <code>init</code> functions have finished.</p>
+
+<h4>创建goroutine</h4>
+
+<p>The <code>go</code> statement that starts a new goroutine happens before the goroutine's execution begins.</p>
+
+<h4>Goroutine 销毁</h4>
+
+<p>The exit of a goroutine is not guaranteed to happen before any event in the program.</p>
+
+<div class="codehilite"><pre><span></span><code><span class="kd">var</span> <span class="nx">a</span> <span class="kt">string</span>
+
+<span class="kd">func</span> <span class="nx">hello</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">go</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="nx">a</span> <span class="p">=</span> <span class="s">&quot;hello&quot;</span> <span class="p">}()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nx">a</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>it is not guaranteed to be observed by any other goroutine. In fact, an <strong>aggressive compiler might delete the entire <code>go</code> statement.</strong></p>
+
+<p>因为这段代码有race condition. Any race is a bug. When there is a race, the compiler is free to do whatever it wants.</p>
+
+<h4>channel 消息通知</h4>
+
+<ul>
+<li>A send on a channel happens before the corresponding receive from that channel completes.</li>
+</ul>
+
+<p>发消息一定在收消息之前, 如果只看这句话, 可能觉得那不一定的吗? </p>
+
+<div class="codehilite"><pre><span></span><code><span class="kd">var</span> <span class="nx">c</span> <span class="p">=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">chan</span> <span class="kt">int</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="kd">var</span> <span class="nx">a</span> <span class="kt">string</span>
+
+<span class="kd">func</span> <span class="nx">f</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">a</span> <span class="p">=</span> <span class="s">&quot;hello, world&quot;</span>
+    <span class="nx">c</span> <span class="o">&lt;-</span> <span class="mi">0</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nx">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">go</span> <span class="nx">f</span><span class="p">()</span>
+    <span class="o">&lt;-</span><span class="nx">c</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nx">a</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>如果不是<code>c &lt;- 0</code> 和<code>&lt;-c</code> 而是读写一个single machine word, 这里依然会有竞态.</p>
+
+<p>is guaranteed to print <code>"hello, world"</code>. The write to <code>a</code> happens before the send on <code>c</code>, which happens before the corresponding receive on <code>c</code> completes, which happens before the <code>print</code>.</p>
+
+<p>因为<code>&lt;-c</code>的成功, 一定意味着拿到了<code>c&lt;-0</code>的数据. </p>
+
+<ul>
+<li><p>The closing of a channel happens before a receive that returns a zero value because the channel is closed.</p></li>
+<li><p>A receive from an unbuffered channel happens before the send on that channel completes.</p>
+
+<p>go语义保证阻塞的channel,  接受是在写发送之前的</p></li>
+<li><p>The <em>k</em>th receive on a channel with capacity <em>C</em> happens before the <strong><em>k</em>+<em>C</em>th</strong> send from that channel completes.</p>
+
+<p>有缓存的buffer, 仅仅能保证第k次读是在<code>k+cap(C)</code>(下一轮)写之前完成的.</p></li>
+</ul>
+
+<h4>Locks</h4>
+
+<p><em>For any</em> <code>sync.Mutex</code> <em>or</em> <code>sync.RWMutex</code> <em>variable</em> <code>l</code> <em>and</em> <em>n</em> <em>\<_ _m\*\*, call_ _n_ _of_ <code>l.Unlock()</code> _happens before call</em> <em>m</em> <em>of</em> <code>l.Lock()</code> <em>returns.</em></p>
+
+<h4>Once</h4>
+
+<div class="codehilite"><pre><span></span><code><span class="kd">type</span> <span class="nx">Once</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">m</span>    <span class="nx">Mutex</span>
+    <span class="nx">done</span> <span class="kt">uint32</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">o</span> <span class="o">*</span><span class="nx">Once</span><span class="p">)</span> <span class="nx">Do</span><span class="p">(</span><span class="nx">f</span> <span class="kd">func</span><span class="p">())</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="nx">atomic</span><span class="p">.</span><span class="nx">LoadUint32</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">o</span><span class="p">.</span><span class="nx">done</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="p">{</span>
+        <span class="k">return</span>
+    <span class="p">}</span>
+    <span class="c1">// Slow-path.</span>
+    <span class="nx">o</span><span class="p">.</span><span class="nx">m</span><span class="p">.</span><span class="nx">Lock</span><span class="p">()</span>
+    <span class="k">defer</span> <span class="nx">o</span><span class="p">.</span><span class="nx">m</span><span class="p">.</span><span class="nx">Unlock</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nx">o</span><span class="p">.</span><span class="nx">done</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+        <span class="k">defer</span> <span class="nx">atomic</span><span class="p">.</span><span class="nx">StoreUint32</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">o</span><span class="p">.</span><span class="nx">done</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="nx">f</span><span class="p">()</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p><em>A single call of <code>f()</code> from <code>once.Do(f)</code> happens (returns) before any call of <code>once.Do(f)</code> returns.</em></p>
+
+<p>do返回的时候f()一定已经call return.</p>
+
+<h3>Incorrect synchronization</h3>
+
+<p><em>Note that a read r may observe the value written by a write w that happens concurrently with r. Even if this occurs, it <strong>does not</strong> imply that reads happening after r will observe writes that happened before w.</em></p>
+
+<div class="codehilite"><pre><span></span><code><span class="kd">var</span> <span class="nx">a</span> <span class="kt">string</span>
+<span class="kd">var</span> <span class="nx">done</span> <span class="kt">bool</span>
+<span class="kd">func</span> <span class="nx">doprint</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">!</span><span class="nx">done</span> <span class="p">{</span>
+    <span class="nx">once</span><span class="p">.</span><span class="nx">Do</span><span class="p">(</span><span class="kd">func</span> <span class="p">(){</span>
+      <span class="nx">a</span> <span class="p">=</span> <span class="s">&quot;hello, world&quot;</span>
+      <span class="nx">done</span> <span class="p">=</span> <span class="kc">true</span><span class="p">})</span>
+    <span class="p">}</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nx">a</span><span class="p">)</span>
+<span class="p">}</span>
+<span class="kd">func</span> <span class="nx">twoprint</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">go</span> <span class="nx">doprint</span><span class="p">()</span>
+    <span class="k">go</span> <span class="nx">doprint</span><span class="p">()</span>
+<span class="p">}</span>
+</code></pre></div>
+
+  </div>
+</body>
+<!-- Global Site Tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-106796420-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments)};
+  gtag('js', new Date());
+  gtag('config', 'UA-106796420-1');
+</script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?2e8594e80b736182ce88fcd89a36402d";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+</html>
