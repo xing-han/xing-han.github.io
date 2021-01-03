@@ -1,5 +1,6 @@
 ---
 layout: home
+title: 聪明的鱼鱼和她の男人
 ---
 
 {% for post in site.posts %}
