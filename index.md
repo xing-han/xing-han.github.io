@@ -1,0 +1,10 @@
+---
+layout: home
+---
+
+{% for post in site.posts %}
+<li class="list-group-item title">
+    <div class="date">{{post.date | date:"%Y年%m月%d日"}}</div><br>
+    <a href="{{post.url}}">{{post.title}}</a>
+</li>
+{% endfor %}
