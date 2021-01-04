@@ -245,4 +245,4 @@ function start() {
 }
 </script>
 <style onload="start()"></style>
-<canvas id="canvas1" width="512" height="512" style="margin: auto; height: 100%"></canvas>
+<canvas id="canvas1" width="512" height="512" style="margin: auto; height: 60%"></canvas>
