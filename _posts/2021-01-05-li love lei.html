@@ -248,6 +248,12 @@ function start() {
 </script>
 </head>
 <body onload="start()" style="display:grid; height: 100%">
+  <script>
+      if (/mobile/i.test(navigator.userAgent) || /android/i.test(navigator.userAgent))
+      {
+         document.body.classList.add('mobile');
+      }
+  </script>
 <canvas id="canvas1" width="512" height="512" style="margin: auto; height: 100%"></canvas>
 </body>
 </html>
