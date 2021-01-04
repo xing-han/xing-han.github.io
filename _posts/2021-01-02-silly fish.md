@@ -1,0 +1,13 @@
+---
+published: true
+---
+
+下面是一张傻鱼的小马尾自拍
+
+<img src="/images/maweiyu.jpg" width="500" />
+
+她让我再加几张...
+
+<img src="/images/leiyu1.jpg" width="500" />
+
+<img src="/images/leiyu2.jpg" width="500" />
