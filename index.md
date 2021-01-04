@@ -1,6 +1,6 @@
 ---
 layout: home
-title: 聪明的鱼鱼和她の男人
+title: 韩兴的QQ空间
 ---
 
 {% for post in site.posts %}
