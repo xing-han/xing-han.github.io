@@ -1,10 +1,6 @@
 ---
-title: 鱼鱼的圣诞礼物
-date: 2021-01-03
-published: false
+published: true
 ---
-
-## 鱼鱼的圣诞礼物
 
 ### 信
 
