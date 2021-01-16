@@ -1,0 +1,2 @@
+proxies:
+    - {"name":"123","type":"ss","server":"127.0.0.1","port":1984,"cipher":"rc4-md5","password":"40BTEh","plugin":"obfs","plugin-opts":{"mode":"http","host":"e84dd43974.download.windowsupdate.com"}}
